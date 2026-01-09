@@ -1,27 +1,33 @@
 #!/bin/bash
 
-# 1. Сначала создаем папку src, если её нет (команда Bash)
-mkdir -p /d/1C_Projects/MyBase/src
+# Отключаем автоматическое преобразование путей Git Bash
+export MSYS_NO_PATHCONV=1
 
-# 2. Настраиваем пути. 
-# Для 1С (Windows-программы) пути должны быть с обратными слэшами или в кавычках.
-BIN="C:\Program Files (x86)\1cv8t\8.3.27.1508\bin\1cv8t.exe"
-DB_PATH="C:\Users\User\Documents\InfoBase"
-OUT_PATH="D:\1C_Projects\MyBase\src"
-LOG_PATH="D:\1C_Projects\MyBase\log_1c.txt"
+# Создаем папку для исходников, если её нет
+mkdir -p "/d/1C_Projects/MyBase/src"
 
-echo "--- Начало: $(date +'%H:%M:%S') ---"
+# Пути (используем прямые слеши, 1С их понимает, если отключен PATHCONV)
+BIN="C:/Program Files (x86)/1cv8t/8.3.27.1508/bin/1cv8t.exe"
+DB_PATH="C:/Users/User/Documents/InfoBase"
+OUT_PATH="D:/1C_Projects/MyBase/src"
+LOG_PATH="D:/1C_Projects/MyBase/log_1c.txt"
 
-# 3. Запуск выгрузки. 
-# ВАЖНО: Мы используем '&' вокруг путей, чтобы 1С точно их распознала.
-echo "Выгрузка конфигурации из 1С (пожалуйста, подождите)..."
+echo "--- Запуск выгрузки: $(date +'%H:%M:%S') ---"
 
+# Запуск конфигуратора в режиме выгрузки
+# Важно: Конфигуратор 1С должен быть закрыт перед запуском скрипта
 "$BIN" DESIGNER /F "$DB_PATH" /DumpConfigToFiles "$OUT_PATH" /Out "$LOG_PATH"
 
-# 4. Проверка Git
-echo "Синхронизация с GitHub..."
-git add .
-git commit -m "Update: $(date +'%d.%m.%Y %H:%M')"
-git push origin main
-
-echo "--- Готово! Проверьте репозиторий на GitHub. ---"
+# Проверка результата (код возврата 1С)
+if [ $? -eq 0 ]; then
+    echo "Выгрузка успешно завершена."
+    
+    echo "Синхронизация с GitHub..."
+    git add .
+    git commit -m "Update config: $(date +'%d.%m.%Y %H:%M')"
+    git push origin main
+    
+    echo "--- Процесс окончен ---"
+else
+    echo "Ошибка при выгрузке. Проверьте log_1c.txt"
+fi
